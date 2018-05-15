@@ -45,8 +45,11 @@ print_logo() {
 }
 
 # Check if we have root
-has_root() {
-  echo "TODO"
+check_root() {
+   if [[ $EUID -ne 0 ]]; then
+      echo "This script must be run with sudo in order to install curl"
+      exit 1
+   fi
 }
 
 # Check if we have yum package manager
@@ -54,7 +57,10 @@ has_root() {
 # Adding a package:
 # $ yum install curl -y
 has_yum() {
-  echo "TODO"
+   if [[ -n "$(command -v yum)" ]]; then
+      return 0
+   fi
+   return 1
 }
 
 # Check if we have apt-get package manager
@@ -62,7 +68,10 @@ has_yum() {
 # Adding a package:
 # $ apt-get install curl -y
 has_apt() {
-  echo "TODO"
+   if [[ -n "$(command -v apt-get)" ]]; then
+      return 0
+   fi
+   return 1
 }
 
 # Check if we have apk package manager
@@ -70,17 +79,26 @@ has_apt() {
 # Adding a package:
 # $ apk add curl
 has_apk() {
-  echo "TODO"
+   if [[ -n "$(command -v apk)" ]]; then
+      return 0
+   fi
+   return 1
 }
 
 # Check if we have cURL
 has_curl() {
-  echo "TODO"
+   if [[ -n "$(command -v curl)" ]]; then
+      return 0
+   fi
+   return 1
 }
 
 # Check if we have wget
 has_wget() {
-  echo "TODO"
+   if [[ -n "$(command -v wget)" ]]; then
+      return 0
+   fi
+   return 1
 }
 
 # Check if we have lscpu command
@@ -91,29 +109,49 @@ has_wget() {
 # Stepping:            9
 # CPU MHz:             2900.000
 has_lscpu() {
-  echo "TODO"
+   if [[ -n "$(command -v lscpu)" ]]; then
+      return 0
+   fi
+   return 1
 }
 
 # Check if we have /proc/cpuinfo
 has_proc_cpuinfo() {
-  echo "TODO"
+   if [[ -e /proc/cpuinfo ]]; then
+      return 0
+   fi
+   return 1
+}
+
+check_ark_intel() {
+   productUrl=$(curl "https://ark.intel.com/search/AutoComplete?term=${cpuModel}" | sed -n 's/.*\"quickUrl\":\"\(.*\)\".*/\1/p')
+   tmpCpuType=$(curl --silent "https://ark.intel.com${productUrl}" | sed -n 's/.*Products formerly \(.*\)<.*/\1/p')
+   CPU_TYPE=$(echo $tmpCpuType | sed 's/ //g' | awk '{print tolower($0)}')
 }
 
 # Check CPU type
 check_cpu_type() {
-  echo "TODO"
-  # If we have lscpu, use the following command:
+   CPU_TYPE="core2"
 
-  # lscpu | sed -nr '/Model name/ s/.*:\s*(.*) @ .*/\1/p' | cut -d ' ' -f 3
-  # Example: i7-7820HQ
+   if has_lscpu; then
+      cpuModel=$(lscpu | sed -nr '/Model name/ s/.*:\s*(.*) @ .*/\1/p' | cut -d ' ' -f 3)
+      check_ark_intel
+   elif has_proc_cpuinfo; then
+      cpuModel=$(cat /proc/cpuinfo | sed -nr '/model name/ s/.*:\s*(.*) @ .*/\1/p' | cut -d ' ' -f 3 | head -1)
+      check_ark_intel
+   fi
+}
 
-  # If we have /proc/cpuinfo, use the following command:
-  # cat /proc/cpuinfo | sed -nr '/model name/ s/.*:\s*(.*) @ .*/\1/p' | cut -d ' ' -f 3 | head -1
-  # Example: i7-7820HQ
-
-  # If we get something, look it up against our lookup tables
-  # Otherwise, use the `compatible` version (ie. core2)
-  CPU_TYPE="core2"
+install_curl() {
+   if has_yum; then
+      sudo yum upgrade -y
+      sudo yum install curl
+   elif has_apt; then
+      sudo apt-get update -y
+      sudo apt-get install curl
+   elif has_apk; then
+      sudo apk add curl
+   fi
 }
 
 # Script starts here!
@@ -121,14 +159,35 @@ if [[ -z "$WALLET_ADDRESS" ]]; then
   echo "WALLET_ADDRESS was not defined!"
   exit 1
 fi
-if [[ -z ${WORKER_ID+x} ]]; then
+if [[ -z ${WORKER_ID} ]]; then
   echo "WORKER_ID was not defined, using random numeric string ..."
   exit 1
 fi
 
 print_logo
 
+check_cpu_type
+
 echo "Installing Nimbus Pool Miner with the following settings:"
 echo "Wallet: ${WALLET_ADDRESS}"
 echo "Worker Name: ${WORKER_ID}"
 echo "CPU Type: ${CPU_TYPE}"
+
+VERSION=0.3.3
+MINER_ZIP_FN="nimbuspool-miner-linux-${VERSION}-${CPU_TYPE}.zip"
+
+if ! has_curl && has_wget; then
+   echo "cURL is not installed. Trying wget..."
+   wget "https://github.com/NimbusPool/miner/releases/download/v${VERSION}/${MINER_ZIP_FN}"
+else
+   if ! has_curl; then
+      check_root
+      echo "Trying to install cURL..."
+      install_curl
+   fi
+
+   curl -k -L "https://github.com/NimbusPool/miner/releases/download/v${VERSION}/${MINER_ZIP_FN}" -o $MINER_ZIP_FN
+fi
+
+unzip $MINER_ZIP_FN
+screen -d -m ./nimbuspool-client-linux-x64 --wallet-address=${WALLET_ADDRESS} --extra-data=${WORKER_ID}
