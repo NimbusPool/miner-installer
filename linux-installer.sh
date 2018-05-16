@@ -418,8 +418,14 @@ else
   # Clean-up the zip
   rm -f $MINER_ZIP_FN
 
+  # Generate extra data flag
+  EXTRADATA=""
+  if [[ -n "$WORKER_ID" ]]; then
+    EXTRADATA=" --extra-data=\"${WORKER_ID}\""
+  fi
+
   # Write two files; start-foreground.sh / start-background.sh
-  EXEC_LINE="./nimbuspool-client-linux-x64 --wallet-address=\"${WALLET_ADDRESS}\" ${PRETTY_EXTRADATA}"
+  EXEC_LINE="./nimbuspool-client-linux-x64 --wallet-address=\"${WALLET_ADDRESS}\"${EXTRADATA}"
   write_start_foreground_script "${EXEC_LINE}"
   write_start_background_script "${EXEC_LINE}"
 
