@@ -319,8 +319,10 @@ if ! has_curl && ! has_wget; then
   install_curl
 fi
 
-# Update package manager in case we use it
-update_pkgmgr
+if check_root; then
+  # Update package manager in case we use it
+  update_pkgmgr
+fi
 
 # Check for unzip
 if ! has_unzip; then
