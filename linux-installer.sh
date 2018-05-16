@@ -216,14 +216,18 @@ has_avx512() {
 check_cpu_type() {
   if has_avx512; then
     # Forcefully setting skylake-avx512 as we have AVX512 support on the processor
+    CPU_CORES=`grep -c ^processor /proc/cpuinfo`
     CPU_TYPE="skylake-avx512"
   elif has_proc_cpuinfo; then
+    CPU_CORES=`grep -c ^processor /proc/cpuinfo`
     cpuModel=$(cat /proc/cpuinfo | sed -nr '/model name\s*:/ s/([^)]*) @.*/{\1}/p' | sed -nr 's/.*\{(.*)\}.*/\1/p' | sed 's/CPU//g' | head -1)
     check_ark_intel
   elif has_lscpu; then
+    CPU_CORES=`nproc`
     cpuModel=$(lscpu | sed -nr '/Model name:/ s/([^)]*) @.*/{\1}/p' | sed -nr 's/.*\{(.*)\}.*/\1/p' | sed 's/CPU//g')
     check_ark_intel
   elif is_darwin; then
+    CPU_CORES=`sysctl -n hw.logicalcpu`
     cpuModel=$(sysctl -n machdep.cpu.brand_string | sed -n 's/\([^)]*\) @.*/{\1}/p' | sed -n 's/.*{\(.*\)}.*/\1/p' | sed 's/CPU//g')
     check_ark_intel
   else
@@ -288,11 +292,17 @@ write_script() {
 
 write_start_foreground_script() {
   write_script "start-foreground.sh"
+  if [[ -n "$CPU_CORES" ]]; then
+    echo "export UV_THREADPOOL_SIZE=${CPU_CORES}" >> "start-foreground.sh"
+  fi
   echo $1 >> "start-foreground.sh"
 }
 
 write_start_background_script() {
   write_script "start-background.sh"
+  if [[ -n "$CPU_CORES" ]]; then
+    echo "export UV_THREADPOOL_SIZE=${CPU_CORES}" >> "start-background.sh"
+  fi
   echo "screen -d -m -S nimbusminer ${1}" >> "start-background.sh"
 
   echo "echo \"Nimbus Miner has been started in the background.\"" >> "start-background.sh"
