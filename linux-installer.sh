@@ -243,7 +243,7 @@ download() {
 
 # Script starts here!
 # Check for a download manager
-if ! has_curl && ! has_wget; then
+if [ ! has_curl ] && [ ! has_wget ]; then
   install_curl
 fi
 
