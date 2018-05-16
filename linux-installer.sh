@@ -278,14 +278,21 @@ unzip $MINER_ZIP_FN
 
 # Install persistence
 if [[ -n "$INSTALL_SERVICE" ]]; then
+  echo "TODO: Service installation"
   # TODO
   # https://github.com/moby/moby/tree/master/contrib/init
-  # Need to check what service is available:
   # systemd
   # sysvinit-debian
   # sysvinit-redhat
   # upstart
-
   # After installing the service, start it
+else
+  # Requested to install without service management
+  CUR_DIR=`pwd`
+  echo "The miner executable has been installed in ${CUR_DIR}"
+  echo ""
+  echo "To start the miner, use the following command:"
+  echo ""
+  echo "./nimbuspool-client-linux-x64 --wallet-address=\"<your Nimiq address>\" --extra-data=\"<optional identifier for this device>\""
+  echo ""
 fi
-# screen -d -m ./nimbuspool-client-linux-x64 --wallet-address=${WALLET_ADDRESS} --extra-data=${WORKER_ID}
