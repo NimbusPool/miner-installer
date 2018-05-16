@@ -1,5 +1,8 @@
 #/bin/bash
 
+VERSION=0.3.3
+WORKING_DIR="nimbuspool-miner"
+
 # List of supported CPU; if not in this list, then
 # will revert to use compatible 'core2'.
 supported_cputypes=(
@@ -228,7 +231,6 @@ print_logo
 check_cpu_type
 check_cpu_compatible
 
-VERSION=0.3.3
 MINER_ZIP_FN="nimbuspool-miner-linux-${VERSION}-${CPU_TYPE}.zip"
 MINER_URL="https://github.com/NimbusPool/miner/releases/download/v${VERSION}/${MINER_ZIP_FN}"
 
@@ -248,6 +250,22 @@ echo "Wallet: ${WALLET_ADDRESS}"
 echo "Worker Name: ${PRETTY_WORKER_NAME}"
 echo "CPU Type: ${CPU_TYPE}"
 
+# Make working directory
+mkdir -p $WORKING_DIR
+cd $WORKING_DIR
 download "${MINER_URL}" $MINER_ZIP_FN
 unzip $MINER_ZIP_FN
-screen -d -m ./nimbuspool-client-linux-x64 --wallet-address=${WALLET_ADDRESS} --extra-data=${WORKER_ID}
+
+# Install persistence
+if [[ -n "$INSTALL_SERVICE" ]]; then
+  # TODO
+  # https://github.com/moby/moby/tree/master/contrib/init
+  # Need to check what service is available:
+  # systemd
+  # sysvinit-debian
+  # sysvinit-redhat
+  # upstart
+
+  # After installing the service, start it
+fi
+# screen -d -m ./nimbuspool-client-linux-x64 --wallet-address=${WALLET_ADDRESS} --extra-data=${WORKER_ID}
