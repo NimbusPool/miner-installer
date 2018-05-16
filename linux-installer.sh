@@ -246,6 +246,7 @@ set_from_xeonE_version() {
       "v3") CPU_TYPE="haswell" ;;
       "v4") CPU_TYPE="broadwell" ;;
       *) echo "Could not set CPU_TYPE from Xeon version '${xeonVersion}'" ;;
+    esac
   fi
 }
 
