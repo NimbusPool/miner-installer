@@ -241,11 +241,10 @@ set_from_xeonE_version() {
     echo "Could not set CPU_TYPE from Xeon E version"
   else
     case $xeonVersion in
-      "v1") CPU_TYPE="sandybridge" ;;
       "v2") CPU_TYPE="ivybridge" ;;
       "v3") CPU_TYPE="haswell" ;;
       "v4") CPU_TYPE="broadwell" ;;
-      *) echo "Could not set CPU_TYPE from Xeon version '${xeonVersion}'" ;;
+      *) CPU_TYPE="sandybridge" ;;
     esac
   fi
 }
