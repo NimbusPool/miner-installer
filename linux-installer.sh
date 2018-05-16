@@ -152,31 +152,37 @@ is_darwin() {
 }
 
 check_ark_intel() {
-  productUrl=$(curl --silent "https://ark.intel.com/search/AutoComplete?term=${cpuModel}" | sed -n 's/.*\"quickUrl\":\"\(.*\)\".*/\1/p')
+  searchTerm=$(echo $cpuModel | sed 's/ /%20/g')
+  productUrl=$(curl --silent "https://ark.intel.com/search/AutoComplete?term=${searchTerm}" | sed -n 's/.*\"quickUrl\":\"\(.*\)\".*/\1/p')
+  if [[ -z $productUrl ]]; then
+     echo "CPU information cannot be found for ${cpuModel}! Using default 'core2' for compatibility"
+     CPU_TYPE="core2"
+     return
+  fi
+
   tmpCpuType=$(curl --silent "https://ark.intel.com${productUrl}" | sed -n 's/.*Products formerly \(.*\)<.*/\1/p')
   CPU_TYPE=$(echo $tmpCpuType | sed 's/ //g' | awk '{print tolower($0)}')
 
   # Kaby Lake is not supported yet, downgrade to Skylake
   if [ "$CPU_TYPE" == "kabylake" ]; then
-    CPU_TYPE="foo"
+    CPU_TYPE="skylake"
   fi
 }
 
 # Check CPU type
 check_cpu_type() {
-  CPU_TYPE="core2"
-
   if has_lscpu; then
-    cpuModel=$(lscpu | sed -nr '/Model name/ s/.*:\s*(.*) @ .*/\1/p' | cut -d ' ' -f 3)
+    cpuModel=$(lscpu | sed -nr '/Model name:/ s/([^)]*) @.*/{\1}/p' | sed -nr 's/.*\{(.*)\}.*/\1/p' | sed 's/CPU//g')
     check_ark_intel
   elif has_proc_cpuinfo; then
-    cpuModel=$(cat /proc/cpuinfo | sed -nr '/model name/ s/.*:\s*(.*) @ .*/\1/p' | cut -d ' ' -f 3 | head -1)
+    cpuModel=$(cat /proc/cpuinfo | sed -nr '/model name\s*:/ s/([^)]*) @.*/{\1}/p' | sed -nr 's/.*\{(.*)\}.*/\1/p' | sed 's/CPU//g' | head -1)
     check_ark_intel
   elif is_darwin; then
-    cpuModel=$(sysctl -n machdep.cpu.brand_string | cut -d ' ' -f 3)
+    cpuModel=$(sysctl -n machdep.cpu.brand_string | sed -n 's/\([^)]*\) @.*/{\1}/p' | sed -n 's/.*{\(.*\)}.*/\1/p' | sed 's/CPU//g')
     check_ark_intel
   else
     echo "Unknown CPU type; using default 'core2' for compatibility"
+    CPU_TYPE="core2"
   fi
 }
 
@@ -184,6 +190,7 @@ check_cpu_type() {
 check_cpu_compatible() {
   if [[ ! "${supported_cputypes[@]}" =~ "${CPU_TYPE}" ]]; then
     echo "CPU type '${CPU_TYPE}' is not compatible with the miner; reverting to compatible 'core2'."
+    CPU_TYPE="core2"
     return 1
   fi
   return 0
