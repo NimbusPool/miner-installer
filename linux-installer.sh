@@ -231,9 +231,9 @@ download() {
   URL=$1
   OUTPUT_PATH=$2
 
-  if [[ has_curl ]]; then
+  if has_curl; then
     curl -k -L "${URL}" -o $OUTPUT_PATH
-  elif [[ has_wget ]]; then
+  elif has_wget; then
     wget "${URL}" -o $OUTPUT_PATH
   fi
 
@@ -243,7 +243,7 @@ download() {
 
 # Script starts here!
 # Check for a download manager
-if !has_curl && !has_wget; then
+if ! has_curl && ! has_wget; then
   install_curl
 fi
 
