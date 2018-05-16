@@ -120,6 +120,20 @@ has_wget() {
   return 1
 }
 
+has_unzip() {
+  if [[ -n "$(command -v unzip)" ]]; then
+    return 0
+  fi
+  return 1
+}
+
+has_screen() {
+  if [[ -n "$(command -v screen)" ]]; then
+    return 0
+  fi
+  return 1
+}
+
 # Check if we have lscpu command
 #
 # -- Output:
@@ -149,6 +163,25 @@ is_darwin() {
     return 0
   fi
   return 1
+}
+
+update_pkgmgr() {
+  if has_yum; then
+    yum upgrade -y
+  elif has_apt; then
+    apt-get update -y
+  fi
+}
+
+# install_pkg [yum_pkg] [apt_pkg] [apk_pkg]
+install_pkg() {
+  if has_yum; then
+    yum install $1 -y
+  elif has_apt; then
+    apt-get install $2 -y
+  elif has_apk; then
+    apk --no-cache add $3 -y
+  fi
 }
 
 check_ark_intel() {
@@ -214,16 +247,23 @@ install_curl() {
     echo "Cannot install cURL without root privileges!"
     exit 1
   fi
+  install_pkg "curl" "curl" "curl"
+}
 
-  if has_yum; then
-    yum upgrade -y
-    yum install curl
-  elif has_apt; then
-    apt-get update -y
-    apt-get install curl
-  elif has_apk; then
-    apk add curl
+install_unzip() {
+  if ! check_root; then
+    echo "Cannot install unzip without root privileges!"
+    exit 1
   fi
+  install_pkg "zip" "zip" "zip"
+}
+
+install_screen() {
+  if ! check_root; then
+    echo "Cannot install screen without root privileges!"
+    exit 1
+  fi
+  install_pkg "screen" "screen" "screen"
 }
 
 # Download <url> <output_path>
@@ -241,10 +281,45 @@ download() {
   unset OUTPUT_PATH
 }
 
+write_script() {
+  echo "#!/bin/sh" > $1
+  chmod +x $1
+}
+
+write_start_foreground_script() {
+  write_script "start-foreground.sh"
+  echo $1 >> "start-foreground.sh"
+}
+
+write_start_background_script() {
+  write_script "start-background.sh"
+  echo "screen -d -m -S nimbusminer ${1}" >> "start-background.sh"
+
+  echo "Nimbus Miner has been started in the background." >> "start-background.sh"
+  echo "To attach to the background terminal, use the following command:" >> "start-background.sh"
+  echo "" >> "start-background.sh"
+  echo "screen -r nimbusminer" >> "start-background.sh"
+  echo "" >> "start-background.sh"
+  echo "Once attached, to detach, use the Ctrl+A, D shortcut." >> "start-background.sh"
+}
+
 # Script starts here!
 # Check for a download manager
-if [ ! has_curl ] && [ ! has_wget ]; then
+if ! has_curl && ! has_wget; then
   install_curl
+fi
+
+# Update package manager in case we use it
+update_pkgmgr
+
+# Check for unzip
+if ! has_unzip; then
+  install_unzip
+fi
+
+# Check for screen
+if ! has_screen; then
+  install_screen
 fi
 
 print_logo
@@ -288,11 +363,29 @@ if [[ -n "$INSTALL_SERVICE" ]]; then
   # After installing the service, start it
 else
   # Requested to install without service management
+  # Clean-up the zip
+  rm -f $MINER_ZIP_FN
+
+  # Write two files; start-foreground.sh / start-background.sh
+  EXEC_LINE="./nimbuspool-client-linux-x64 --wallet-address=\"${WALLET_ADDRESS}\" ${PRETTY_EXTRADATA}"
+  write_start_foreground_script "${EXEC_LINE}"
+  write_start_background_script "${EXEC_LINE}"
+
   CUR_DIR=`pwd`
-  echo "The miner executable has been installed in ${CUR_DIR}"
   echo ""
-  echo "To start the miner, use the following command:"
+  echo "The miner executable has been installed in the ${WORKING_DIR} directory."
   echo ""
-  echo "./nimbuspool-client-linux-x64 --wallet-address=\"<your Nimiq address>\" --extra-data=\"<optional identifier for this device>\""
+  echo "To start the miner in the foreground, use the following command:"
   echo ""
+  echo "./${WORKING_DIR}/start-foreground.sh"
+  echo ""
+  echo "To start the miner in the background, use the following command:"
+  echo ""
+  echo "./${WORKING_DIR}/start-background.sh"
+fi
+
+# Start background script
+if [[ -n "$START_BACKGROUND" ]]; then
+  echo "Automatically starting miner in background ..."
+  ./${WORKING_DIR}/start-background.sh
 fi
