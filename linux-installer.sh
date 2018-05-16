@@ -295,12 +295,12 @@ write_start_background_script() {
   write_script "start-background.sh"
   echo "screen -d -m -S nimbusminer ${1}" >> "start-background.sh"
 
-  echo "Nimbus Miner has been started in the background." >> "start-background.sh"
-  echo "To attach to the background terminal, use the following command:" >> "start-background.sh"
-  echo "" >> "start-background.sh"
-  echo "screen -r nimbusminer" >> "start-background.sh"
-  echo "" >> "start-background.sh"
-  echo "Once attached, to detach, use the Ctrl+A, D shortcut." >> "start-background.sh"
+  echo "echo \"Nimbus Miner has been started in the background.\"" >> "start-background.sh"
+  echo "echo \"To attach to the background terminal, use the following command:\"" >> "start-background.sh"
+  echo "echo \"\"" >> "start-background.sh"
+  echo "echo \"screen -r nimbusminer\"" >> "start-background.sh"
+  echo "echo \"\"" >> "start-background.sh"
+  echo "echo \"Once attached, to detach, use the Ctrl+A, D shortcut.\"" >> "start-background.sh"
 }
 
 # Script starts here!
@@ -371,7 +371,6 @@ else
   write_start_foreground_script "${EXEC_LINE}"
   write_start_background_script "${EXEC_LINE}"
 
-  CUR_DIR=`pwd`
   echo ""
   echo "The miner executable has been installed in the ${WORKING_DIR} directory."
   echo ""
@@ -387,5 +386,5 @@ fi
 # Start background script
 if [[ -n "$START_BACKGROUND" ]]; then
   echo "Automatically starting miner in background ..."
-  ./${WORKING_DIR}/start-background.sh
+  ./start-background.sh
 fi
