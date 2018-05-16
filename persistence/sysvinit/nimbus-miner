@@ -1,0 +1,24 @@
+#!/bin/sh
+
+case "$1" in
+	start)
+		${NIMBUS_MINER_PATH}/nimbuspool-client-linux-x64 --wallet-address=${WALLET_ADDRESS} --extra-data=${WORKER_ID}
+		;;
+
+	stop)
+		echo "TODO"
+		;;
+
+	restart)
+		echo "TODO"
+		;;
+
+	status)
+		echo "TODO"
+		;;
+
+	*)
+		echo "Usage: service nimbus-miner {start|stop|restart|status}"
+		exit 1
+		;;
+esac
