@@ -169,13 +169,26 @@ check_ark_intel() {
   fi
 }
 
+has_avx512() {
+  if has_proc_cpuinfo; then
+    tmpAvx512Check=$(cat /proc/cpuinfo | grep -o avx512 | head -1)
+    if [[ "$tmpAvx512Check" == "avx512" ]]; then
+      return 0
+    fi
+  fi
+  return 1
+}
+
 # Check CPU type
 check_cpu_type() {
-  if has_lscpu; then
-    cpuModel=$(lscpu | sed -nr '/Model name:/ s/([^)]*) @.*/{\1}/p' | sed -nr 's/.*\{(.*)\}.*/\1/p' | sed 's/CPU//g')
-    check_ark_intel
+  if has_avx512; then
+    # Forcefully setting skylake-avx512 as we have AVX512 support on the processor
+    CPU_TYPE="skylake-avx512"
   elif has_proc_cpuinfo; then
     cpuModel=$(cat /proc/cpuinfo | sed -nr '/model name\s*:/ s/([^)]*) @.*/{\1}/p' | sed -nr 's/.*\{(.*)\}.*/\1/p' | sed 's/CPU//g' | head -1)
+    check_ark_intel
+  elif has_lscpu; then
+    cpuModel=$(lscpu | sed -nr '/Model name:/ s/([^)]*) @.*/{\1}/p' | sed -nr 's/.*\{(.*)\}.*/\1/p' | sed 's/CPU//g')
     check_ark_intel
   elif is_darwin; then
     cpuModel=$(sysctl -n machdep.cpu.brand_string | sed -n 's/\([^)]*\) @.*/{\1}/p' | sed -n 's/.*{\(.*\)}.*/\1/p' | sed 's/CPU//g')
