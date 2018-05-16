@@ -216,12 +216,48 @@ has_avx512() {
   return 1
 }
 
+has_xeonE() {
+  if has_proc_cpuinfo; then
+    tmpXeonCheck=$(cat /proc/cpuinfo | grep Xeon | head -1 | grep -o 'E[0-9]-[0-9]\+')
+    if [[ -n "$tmpXeonCheck" ]]; then
+      return 0
+    fi
+  elif has_lscpu; then
+    tmpXeonCheck=$(lscpu | grep Xeon | head -1 | grep -o 'E[0-9]-[0-9]\+')
+    if [[ -n "$tmpXeonCheck" ]]; then
+      return 0
+    fi
+  fi
+}
+
+set_from_xeonE_version() {
+  if has_proc_cpuinfo; then
+    xeonVersion=$(cat /proc/cpuinfo | grep -o ' v[0-9] \@' | cut -d ' ' -f 2 | head -1)
+  elif has_lscpu; then
+    xeonVersion=$(lscpu | grep -o ' v[0-9] \@' | cut -d ' ' -f 2 | head -1)
+  fi
+
+  if [[ -z "$xeonVersion" ]]; then
+    echo "Could not set CPU_TYPE from Xeon E version"
+  else
+    case $xeonVersion in
+      "v1") CPU_TYPE="sandybridge" ;;
+      "v2") CPU_TYPE="ivybridge" ;;
+      "v3") CPU_TYPE="haswell" ;;
+      "v4") CPU_TYPE="broadwell" ;;
+      *) echo "Could not set CPU_TYPE from Xeon version '${xeonVersion}'" ;;
+  fi
+}
+
 # Check CPU type
 check_cpu_type() {
   if has_avx512; then
     # Forcefully setting skylake-avx512 as we have AVX512 support on the processor
     CPU_CORES=`grep -c ^processor /proc/cpuinfo`
     CPU_TYPE="skylake-avx512"
+  elif has_xeonE; then
+    CPU_CORES=`grep -c ^processor /proc/cpuinfo`
+    set_from_xeonE_version
   elif has_proc_cpuinfo; then
     CPU_CORES=`grep -c ^processor /proc/cpuinfo`
     cpuModel=$(cat /proc/cpuinfo | sed -nr '/model name\s*:/ s/([^)]*) @.*/{\1}/p' | sed -nr 's/.*\{(.*)\}.*/\1/p' | sed 's/CPU//g' | head -1)
