@@ -200,6 +200,10 @@ check_ark_intel() {
   if [ "$CPU_TYPE" == "kabylake" ]; then
     CPU_TYPE="skylake"
   fi
+  # Cannonlake is not supported yet, downgrade to Skylake
+  if [ "$CPU_TYPE" == "cannonlake" ]; then
+    CPU_TYPE="skylake"
+  fi
 }
 
 has_avx512() {
