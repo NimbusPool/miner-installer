@@ -142,6 +142,46 @@ has_proc_cpuinfo() {
   return 1
 }
 
+has_systemd() {
+   if [[ -n "$(command -v systemctl)" ]]; then
+     return 0
+   fi
+   return 1
+}
+
+has_sysvinit() {
+   if [[ -e /etc/init.d ]]; then
+     return 0
+   fi
+   return 1
+}
+
+has_upstart() {
+   if [[ -n "$(command -v initctl)" ]]; then
+     return 0
+   fi
+   return 1
+}
+
+enable_systemd_service() {
+   echo "Enabling systemd service..."
+   download "https://github.com/NimbusPool/miner-installer/raw/master/persistence/systemd/nimbus-miner.service" nimbus-miner.service
+   cp nimbus-miner.service /etc/systemd/system/nimbus-miner.service
+   systemctl enable nimbus-miner.service
+}
+
+enable_sysvinit_service() {
+   echo "Enabling sysvinit service..."
+   download "https://github.com/NimbusPool/miner-installer/raw/master/persistence/sysvinit/nimbus-miner" nimbus-miner
+   cp nimbus-miner /etc/init.d/nimbus-miner
+}
+
+enable_upstart_service() {
+   echo "Enabling upstart service..."
+   download "https://github.com/NimbusPool/miner-installer/raw/master/persistence/upstart/nimbus-miner.conf" nimbus-miner.conf
+   cp nimbus-miner.conf /etc/init/nimbus-miner.conf
+}
+
 # Returns true if we are on macOS
 is_darwin() {
   unamestr=`uname`
@@ -278,14 +318,19 @@ unzip $MINER_ZIP_FN
 
 # Install persistence
 if [[ -n "$INSTALL_SERVICE" ]]; then
-  echo "TODO: Service installation"
-  # TODO
-  # https://github.com/moby/moby/tree/master/contrib/init
-  # systemd
-  # sysvinit-debian
-  # sysvinit-redhat
-  # upstart
-  # After installing the service, start it
+   echo "Installing Nimbus miner service..."
+
+   export NIMBUS_MINER_PATH=$(pwd)/$WORKING_DIR
+   if has_systemd; then
+      enable_systemd_service
+      systemctl start nimbus-miner.service
+   elif has_sysvinit; then
+      enable_sysvinit_service
+      /etc/init.d/nimbus-miner start
+   elif has_upstart; then
+      enable_upstart_service
+      initctl start nimbus-miner
+   fi
 else
   # Requested to install without service management
   CUR_DIR=`pwd`

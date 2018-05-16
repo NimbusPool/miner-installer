@@ -1,0 +1,6 @@
+[Unit]
+Description = start the Nimbus miner
+[Service]
+ExecStart = ${NIMBUS_MINER_PATH}/nimbuspool-client-linux-x64 --wallet-address=${WALLET_ADDRESS} --extra-data=${WORKER_ID}
+[Install]
+WantedBy = multi-user.target
