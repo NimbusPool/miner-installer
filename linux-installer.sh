@@ -1,6 +1,6 @@
 #/bin/bash
 
-VERSION=0.3.3
+VERSION=0.3.4
 WORKING_DIR="nimbuspool-miner"
 
 # List of supported CPU; if not in this list, then
@@ -232,16 +232,19 @@ has_xeonE() {
 
 set_from_xeonE_version() {
   if has_proc_cpuinfo; then
-    xeonVersion=$(cat /proc/cpuinfo | grep -o ' v[0-9] \@' | cut -d ' ' -f 2 | head -1)
+    xeonVersion=$(cat /proc/cpuinfo | grep -o ' v\?[0-9] \@' | cut -d ' ' -f 2 | head -1)
   elif has_lscpu; then
-    xeonVersion=$(lscpu | grep -o ' v[0-9] \@' | cut -d ' ' -f 2 | head -1)
+    xeonVersion=$(lscpu | grep -o ' v\?[0-9] \@' | cut -d ' ' -f 2 | head -1)
   fi
 
   if [[ -z "$xeonVersion" ]]; then
     echo "Could not set CPU_TYPE from Xeon E version"
+    echo "Using compatible 'sandybridge'"
+    CPU_TYPE="sandybridge"
   else
     case $xeonVersion in
       "v2") CPU_TYPE="ivybridge" ;;
+      "0") CPU_TYPE="ivybridge" ;;
       "v3") CPU_TYPE="haswell" ;;
       "v4") CPU_TYPE="broadwell" ;;
       *) CPU_TYPE="sandybridge" ;;
