@@ -1,6 +1,6 @@
 #/bin/bash
 
-VERSION=0.3.5
+VERSION=0.3.4
 WORKING_DIR="nimbuspool-miner"
 
 # List of supported CPU; if not in this list, then
