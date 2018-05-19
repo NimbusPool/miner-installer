@@ -1,6 +1,7 @@
 #/bin/bash
 
 VERSION=0.3.4
+RYZEN_VERSION=0.3.5
 WORKING_DIR="nimbuspool-miner"
 
 # List of supported CPU; if not in this list, then
@@ -231,6 +232,21 @@ has_xeonE() {
   return 1
 }
 
+has_ryzen() {
+  if has_proc_cpuinfo; then
+    tmpRyzenCheck=$(cat /proc/cpuinfo | grep Ryzen | head -1)
+    if [[ "$tmpRyzenCheck" == "Ryzen" ]]; then
+      return 0
+    fi
+  elif has_lscpu; then
+    tmpRyzenCheck=$(lscpu | grep -o Ryzen | head -1)
+    if [[ "$tmpRyzenCheck" == "Ryzen" ]]; then
+      return 0
+    fi
+  fi
+  return 1
+}
+
 set_from_xeonE_version() {
   if has_proc_cpuinfo; then
     xeonVersion=$(cat /proc/cpuinfo | grep -o ' v\?[0-9] \@' | cut -d ' ' -f 2 | head -1)
@@ -259,6 +275,11 @@ check_cpu_type() {
     # Forcefully setting skylake-avx512 as we have AVX512 support on the processor
     CPU_CORES=`grep -c ^processor /proc/cpuinfo`
     CPU_TYPE="skylake-avx512"
+  elif has_ryzen; then
+    # HACK - Sometimes a later version is available for Ryzen; if so, use that instead.
+    VERSION=$RYZEN_VERSION
+    CPU_CORES=`grep -c ^processor /proc/cpuinfo`
+    CPU_TYPE="znver1"
   elif has_xeonE; then
     CPU_CORES=`grep -c ^processor /proc/cpuinfo`
     set_from_xeonE_version
