@@ -228,6 +228,7 @@ has_xeonE() {
       return 0
     fi
   fi
+  return 1
 }
 
 set_from_xeonE_version() {
@@ -263,11 +264,11 @@ check_cpu_type() {
     set_from_xeonE_version
   elif has_proc_cpuinfo; then
     CPU_CORES=`grep -c ^processor /proc/cpuinfo`
-    cpuModel=$(cat /proc/cpuinfo | sed -nr '/model name\s*:/ s/([^)]*) @.*/{\1}/p' | sed -nr 's/.*\{(.*)\}.*/\1/p' | sed 's/CPU//g' | head -1)
+    cpuModel=$(cat /proc/cpuinfo | sed -nr '/model name\s*:/ s/([^)]*) @.*/{\1}/p' | sed -nr 's/.*\{(.*)\}.*/\1/p' | sed 's/CPU//g' | sed 's/^\W\+//g' | head -1)
     check_ark_intel
   elif has_lscpu; then
     CPU_CORES=`nproc`
-    cpuModel=$(lscpu | sed -nr '/Model name:/ s/([^)]*) @.*/{\1}/p' | sed -nr 's/.*\{(.*)\}.*/\1/p' | sed 's/CPU//g')
+    cpuModel=$(lscpu | sed -nr '/Model name:/ s/([^)]*) @.*/{\1}/p' | sed -nr 's/.*\{(.*)\}.*/\1/p' | sed 's/CPU//g' | sed 's/^\W\+//g' | head -1)
     check_ark_intel
   elif is_darwin; then
     CPU_CORES=`sysctl -n hw.logicalcpu`
