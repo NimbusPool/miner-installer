@@ -234,7 +234,7 @@ has_xeonE() {
 
 has_ryzen() {
   if has_proc_cpuinfo; then
-    tmpRyzenCheck=$(cat /proc/cpuinfo | grep Ryzen | head -1)
+    tmpRyzenCheck=$(cat /proc/cpuinfo | grep -o Ryzen | head -1)
     if [[ "$tmpRyzenCheck" == "Ryzen" ]]; then
       return 0
     fi
