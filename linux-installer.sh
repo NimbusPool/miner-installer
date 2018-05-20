@@ -194,7 +194,7 @@ check_ark_intel() {
      return
   fi
 
-  tmpCpuType=$(curl --silent "https://ark.intel.com${productUrl}" | sed -n 's/.*Products formerly \(.*\)<.*/\1/p')
+  tmpCpuType=$(curl --silent "https://ark.intel.com${productUrl}" | sed -n 's/.*Products formerly \(.*\)<.*/\1/p' | sed 's/EP$//g')
   CPU_TYPE=$(echo $tmpCpuType | sed 's/ //g' | awk '{print tolower($0)}')
 
   # Kaby Lake is not supported yet, downgrade to Skylake
