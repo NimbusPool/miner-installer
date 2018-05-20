@@ -166,6 +166,15 @@ is_darwin() {
   return 1
 }
 
+# Returns true if we are on Windows Subsystem for Linux
+is_wsl() {
+  wincheck=`uname -r | sed -n 's/.*\( *Microsoft *\).*/\1/p'`
+  if [ "$wincheck" == "Microsoft" ]; then
+    return 0
+  fi
+  return 1
+}
+
 update_pkgmgr() {
   if has_yum; then
     yum upgrade -y
@@ -422,7 +431,13 @@ echo "Wallet: ${WALLET_ADDRESS}"
 echo "Worker Name: ${PRETTY_WORKER_NAME}"
 echo "CPU Type: ${CPU_TYPE}"
 
+# If we are in WSL, do a bit more
+if is_wsl; then
+  # TODO: Ask for root to setup screen
+fi
+
 # Make working directory
+rm -rf $WORKING_DIR
 mkdir -p $WORKING_DIR
 cd $WORKING_DIR
 download "${MINER_URL}" $MINER_ZIP_FN
