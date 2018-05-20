@@ -433,6 +433,7 @@ echo "CPU Type: ${CPU_TYPE}"
 
 # If we are in WSL, do a bit more
 if is_wsl; then
+  echo "TODO: Ask for root to setup screen" > /dev/null
   # TODO: Ask for root to setup screen
 fi
 
@@ -445,7 +446,7 @@ unzip $MINER_ZIP_FN
 
 # Install persistence
 if [[ -n "$INSTALL_SERVICE" ]]; then
-  echo "TODO: Service installation"
+  echo "TODO: Service installation" > /dev/null
   # TODO
   # https://github.com/moby/moby/tree/master/contrib/init
   # systemd
