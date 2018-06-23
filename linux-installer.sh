@@ -1,7 +1,7 @@
 #/bin/bash
 
-VERSION=${VERSION:-0.6.0}
-RYZEN_VERSION=${RYZEN_VERSION:-0.6.0}
+VERSION=${VERSION:-0.6.2}
+RYZEN_VERSION=${RYZEN_VERSION:-0.6.2}
 WORKING_DIR="nimbuspool-miner"
 
 # List of supported CPU; if not in this list, then
@@ -367,6 +367,7 @@ write_script() {
 write_start_foreground_script() {
   write_script "start-foreground.sh"
   if [[ -n "$CPU_CORES" ]]; then
+    echo 'export NIMIQ_WS_ENGINE="uws"' >> "start-foreground.sh"
     echo "export UV_THREADPOOL_SIZE=${CPU_CORES}" >> "start-foreground.sh"
   fi
   echo $1 >> "start-foreground.sh"
@@ -375,6 +376,7 @@ write_start_foreground_script() {
 write_start_background_script() {
   write_script "start-background.sh"
   if [[ -n "$CPU_CORES" ]]; then
+    echo 'export NIMIQ_WS_ENGINE="uws"' >> "start-background.sh"
     echo "export UV_THREADPOOL_SIZE=${CPU_CORES}" >> "start-background.sh"
   fi
   echo "screen -d -m -S nimbusminer ${1}" >> "start-background.sh"
