@@ -366,8 +366,8 @@ write_script() {
 
 write_start_foreground_script() {
   write_script "start-foreground.sh"
+  echo 'export NIMIQ_WS_ENGINE="uws"' >> "start-foreground.sh"
   if [[ -n "$CPU_CORES" ]]; then
-    echo 'export NIMIQ_WS_ENGINE="uws"' >> "start-foreground.sh"
     echo "export UV_THREADPOOL_SIZE=${CPU_CORES}" >> "start-foreground.sh"
   fi
   echo $1 >> "start-foreground.sh"
@@ -375,8 +375,8 @@ write_start_foreground_script() {
 
 write_start_background_script() {
   write_script "start-background.sh"
+  echo 'export NIMIQ_WS_ENGINE="uws"' >> "start-background.sh"
   if [[ -n "$CPU_CORES" ]]; then
-    echo 'export NIMIQ_WS_ENGINE="uws"' >> "start-background.sh"
     echo "export UV_THREADPOOL_SIZE=${CPU_CORES}" >> "start-background.sh"
   fi
   echo "screen -d -m -S nimbusminer ${1}" >> "start-background.sh"
@@ -461,6 +461,12 @@ else
   # Clean-up the zip
   rm -f $MINER_ZIP_FN
 
+  # Generate CPU cores flag
+  CPU_CORES_LINE=""
+  if [[ -n "$CPU_CORES" ]]; then
+    CPU_CORES_LINE=" --miner=${CPU_CORES}"
+  fi
+
   # Generate extra data flag
   EXTRADATA=""
   if [[ -n "$WORKER_ID" ]]; then
@@ -468,7 +474,7 @@ else
   fi
 
   # Write two files; start-foreground.sh / start-background.sh
-  EXEC_LINE="./nimbuspool-client-linux-x64 --wallet-address=\"${WALLET_ADDRESS}\"${EXTRADATA}"
+  EXEC_LINE="./nimbuspool-client-linux-x64 --wallet-address=\"${WALLET_ADDRESS}\"${CPU_CORES_LINE}${EXTRADATA}"
   write_start_foreground_script "${EXEC_LINE}"
   write_start_background_script "${EXEC_LINE}"
 
