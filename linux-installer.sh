@@ -466,6 +466,12 @@ else
   if [[ -n "$CPU_CORES" ]]; then
     CPU_CORES_LINE=" --miner=${CPU_CORES}"
   fi
+  
+  # Generate nonces per run flag
+  NONCES_PER_RUN_LINE=""
+  if [[ -n "$NONCES_PER_RUN" ]]; then
+    NONCES_PER_RUN_LINE=" --noncesPerRun=${NONCES_PER_RUN}"
+  fi
 
   # Generate extra data flag
   EXTRADATA=""
@@ -474,7 +480,7 @@ else
   fi
 
   # Write two files; start-foreground.sh / start-background.sh
-  EXEC_LINE="./nimbuspool-client-linux-x64 --wallet-address=\"${WALLET_ADDRESS}\"${CPU_CORES_LINE}${EXTRADATA}"
+  EXEC_LINE="./nimbuspool-client-linux-x64 --wallet-address=\"${WALLET_ADDRESS}\"${CPU_CORES_LINE}${NONCES_PER_RUN_LINE}${EXTRADATA}"
   write_start_foreground_script "${EXEC_LINE}"
   write_start_background_script "${EXEC_LINE}"
 
