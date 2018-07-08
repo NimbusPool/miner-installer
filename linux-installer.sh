@@ -1,7 +1,7 @@
 #/bin/bash
 
-VERSION=${VERSION:-0.7.5}
-RYZEN_VERSION=${RYZEN_VERSION:-0.7.5}
+VERSION=${VERSION:-0.8.0}
+RYZEN_VERSION=${RYZEN_VERSION:-0.8.0}
 WORKING_DIR="nimbuspool-miner"
 
 # List of supported CPU; if not in this list, then
